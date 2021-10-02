@@ -1,0 +1,104 @@
+---
+title: "individual1"
+author: "Daniel Schimke"
+date: "10/1/2021"
+output: html_document
+---
+
+# Lab 3
+
+```{r}
+library(tidyverse)
+library(readxl)
+dat <- readxl::read_xls('GSS.xls')
+dat1 <- dat %>% rename(year = `Gss year for this respondent`) %>% rename(happiness = `General happiness`) %>% rename(politics = `Political party affiliation`) %>% rename(income = `Total family income`) %>% rename(race = `Race of respondent`) %>% rename(sex = `Respondents sex`) %>% rename(education = `Highest year of school completed`) %>% rename(marriage = `Marital status`) %>% rename(id_number = `Respondent id number`) %>% rename(ballot = `Ballot used for interview`)
+
+```
+
+
+
+## Question 1
+
+```{r}
+dat2 <-dat1 %>% group_by(marriage) %>% summarise(AverageYearsEducation = mean(suppressWarnings(as.numeric(education)), na.rm = TRUE))
+dat2
+ggplot(dat2, aes(x=reorder(marriage, -AverageYearsEducation), AverageYearsEducation)) + geom_bar(stat="identity") + ggtitle("Average Years of Education by Marital Status") + xlab("Marital Status") + ylab("Average Years of Education")
+```
+
+
+
+We can see that there is little to separate the average years of education for each of the marital statuses. The highest group and most educated is those who chose to not answer their marital status. The only potential source of reasoning for this that I can think of is that more educated people are less likely to comment on a survey about the very personal aspects of their life. 
+
+The 2 groups that are slightly lower than the others are the separated and widowed groups. These groups have an average of about a year less education than the rest. I suspect the reasoning for the widowed group to be lower is that a person is much more likely to be widowed if they are a part of the older generation. With this generation, they was a much smaller percentage of people to do post-secondary education as compared to today, so the averages are going to be lower when compared to any other group.
+
+
+
+## Question 2
+
+```{r}
+betterEducated <- dat1 %>% group_by(marriage) %>% filter(suppressWarnings(as.numeric(education)) > mean(suppressWarnings(as.numeric(education)), na.rm = TRUE))
+str(betterEducated)
+
+betterEducated %>% group_by(marriage) %>% summarise(AverageYearsEducation = mean(suppressWarnings(as.numeric(education)), na.rm = TRUE))
+```
+
+
+We can see from the structure of the dataframe that about half of the entries in the original dataframe have been removed. This is because the remaining ones are those that are considered "better educated". We can see from the other summary that this interaction has indeed removed based on the individual marital status rather than as a whole. We still have the trends discussed earlier, but they are much higher values because everything below the previous average has been removed. 
+
+
+
+## Question 3
+
+```{r}
+dat3 <- dat1 %>% add_column(happy = ifelse(dat1$happiness=="Pretty happy" | dat1$happiness=="Very happy", "Happy","Unhappy"))
+
+dat3 %>% group_by(marriage) %>% summarise(HappyPercentage=sum(happy=="Happy")/sum(happy =="Happy" | happy=="Unhappy")*100)
+
+ggplot(dat3, aes(x=marriage, fill=happy)) + geom_bar(position="fill") + ggtitle("Happiness by Marital Status") + xlab("Marital Status") + ylab("Ratio of Happiness")
+```
+
+
+I used the marriage variable and the happiness variable to determine this. I first created a new column called "happy" which was simply a value that said happy or unhappy depending on the value of happiness. I then grouped the dataframe by the marital statuses and used this new variable to calculate the percentage for each group that was happy. I then graphed each of the marital statuses side by side showing the ratio of happy to unhappy for each. 
+
+I found that those that were currently married had the highest percentage of happy people. This makes sense as this is seen as one of the most ideal situations by most people. The next highest group is those that never married. This also makes sense because it could be young people that have not got around to it or those who simply decided not to get married and are content with their current lives. The next groups are divorced and widowed. These are lower than the others because they have experienced heartbreak or extreme emotional trauma in one form or another and may have never fully recovered from that, and it is still affecting their happiness. Those that are separated are even lower. I suspect that this is because they have some of the same trauma as the other groups, but it is most likely more recent and fresh in the minds of those in the situations. It is difficult to tell why the happiness is so low for those who did not answer because we have little information to go off of. 
+
+
+
+## Question 4
+
+
+```{r}
+dat3 %>% group_by(politics) %>% summarise(HappyPercentage=sum(happy=="Happy")/sum(happy =="Happy" | happy=="Unhappy")*100)
+
+ggplot(dat3, aes(x=marriage, fill=happy)) + geom_bar(position="fill") + ggtitle("Happiness by Marital Status") + xlab("Marital Status") + ylab("Ratio of Happiness") + facet_wrap(~politics) + coord_flip()
+```
+
+
+I first decided to look at the happiness percentages for each political affiliation to get a general idea of what to expect with the next graph. For all levels of strength of beliefs, people affiliated with the republican party are marginally happier on average than their democratic counterparts. People that either don't know or chose not to answer their political beliefs are the lowest happiness on average. This is surprising to me because from my personal experience, people that focus less of their time on politics and other things like that generally seem much happier than others. 
+
+When looking at the graphs, we can see that the difference between each of the political affiliations is not as large as originally thought. The graph on those who answered that they don't know what their affiliations graph is interesting. We can see that it does not follow the general shape of the rest of the graphs. This is likely because there are probably not many people that answered this way leading to this skewed looking graph. The rest of the graphs follow the general trend discussed in the previous question with some groups having larger percentage of unhappy people than others. Overall, we cannot determine from this information that a respondent's political affiliation affects the relationship between marital status and happiness. We can see that their political affiliation affects their happiness, but each of the political affiliations follows the same graphical trend as each other with a few outliers (people that did not answer their marital status and are Ind, near rep being unhappy) that would probably go away with larger amounts of data.
+
+
+
+## Question 5
+
+I decided to look at race to see if the race of the respondent had any sort of relationship with their overall happiness. I also compared this relationship with the sex of the respondent to see if there was any difference there as well. 
+
+```{r}
+dat3 %>% group_by(race) %>% summarise(HappyPercentage=sum(happy=="Happy")/sum(happy =="Happy" | happy=="Unhappy")*100)
+
+ggplot(dat3, aes(x=race, fill=happy)) + geom_bar(position="fill") + ggtitle("Happiness by Race") + xlab("Race") + ylab("Ratio of Happiness") + coord_flip() + facet_wrap(~sex)
+```
+
+
+Looking at the average happiness, we can see that the white respondents have a much higher average happiness than the other groups. Black respondents have the lowest average happiness with it being slightly lower than those with other races. When looking at the graph, it confirms the original thoughts seen from the averages with white respondents being the most happy, with other and black respondents following with lower values. From the graphs, there is no obvious difference between each sex. 
+
+```{r}
+dat3 %>% group_by(sex) %>% summarise(HappyPercentage=sum(happy=="Happy")/sum(happy =="Happy" | happy=="Unhappy")*100)
+```
+
+Looking at these averages for each sex, we can confirm the observations made with the previous graphs that there is no major difference in the happiness depending on the sex of the respondent. Overall, there is an obvious relationship between the race of the respondent and their happiness we can see from the values and graphs, but the sex of the respondent does seem to affect this relationship or their happiness as a whole. 
+
+
+
+
